@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { MulterError } from "multer";
 import { AppError } from "../lib/AppError.js";
 import { env } from "../config/env.js";
 
@@ -19,6 +20,18 @@ export function errorHandler(
         code: err.code,
         message: err.message,
         ...(err.details !== undefined ? { details: err.details } : {}),
+      },
+    });
+    return;
+  }
+
+  if (err instanceof MulterError) {
+    const isSizeError = err.code === "LIMIT_FILE_SIZE";
+    res.status(isSizeError ? 413 : 400).json({
+      success: false,
+      error: {
+        code: isSizeError ? "FILE_TOO_LARGE" : "UPLOAD_ERROR",
+        message: isSizeError ? "Uploaded file exceeds the maximum allowed size" : err.message,
       },
     });
     return;
