@@ -97,7 +97,7 @@ export function UploadLessonPage() {
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-200"
+                  className="h-full rounded-full bg-indigo-600 transition-all duration-200"
                   style={{ width: `${progress}%` }}
                 />
               </div>

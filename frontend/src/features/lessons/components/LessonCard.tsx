@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiDownload, FiEdit2, FiExternalLink, FiEye, FiTrash2 } from "react-icons/fi";
 import type { Lesson } from "../lessons.types";
-import { getFileMeta } from "../../../lib/fileMeta";
+import { getLessonDownload } from "../lessons.api";
+import { getFileMeta, isPdf, isPowerpoint } from "../../../lib/fileMeta";
 import { formatDate, formatFileSize } from "../../../lib/format";
-import { Badge, Card } from "../../../components/ui";
+import { Badge, Button, Card } from "../../../components/ui";
 
 export function LessonCard({
   lesson,
@@ -15,12 +17,25 @@ export function LessonCard({
   deleting: boolean;
 }) {
   const meta = getFileMeta(lesson.mimeType, lesson.originalFileName);
+  const pdf = isPdf(lesson.mimeType, lesson.originalFileName);
+  const ppt = isPowerpoint(lesson.mimeType, lesson.originalFileName);
+  const [busy, setBusy] = useState(false);
+
+  async function openInNewTab() {
+    setBusy(true);
+    try {
+      const { url } = await getLessonDownload(lesson.id);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <Card hover data-reveal className="flex flex-col p-5">
       <div className="flex items-start gap-4">
         <span
-          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${meta.tint} transition-transform duration-300 group-hover:scale-105`}
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${meta.tint}`}
         >
           <meta.Icon className={`h-6 w-6 ${meta.color}`} />
         </span>
@@ -36,6 +51,7 @@ export function LessonCard({
           >
             {lesson.title}
           </Link>
+          <p className="mt-0.5 truncate text-xs text-slate-400">{lesson.originalFileName}</p>
         </div>
       </div>
 
@@ -43,11 +59,27 @@ export function LessonCard({
         {lesson.description || "No description provided."}
       </p>
 
-      <div className="mt-4 flex items-center justify-between border-t border-slate-200/70 pt-4 dark:border-white/10">
-        <span className="truncate text-xs text-slate-400">
-          Updated {formatDate(lesson.updatedAt)}
-        </span>
-        <div className="flex items-center gap-1">
+      <div className="mt-4 flex items-center gap-2 border-t border-slate-200/70 pt-4 dark:border-white/10">
+        {pdf ? (
+          <Link to={`/lessons/${lesson.id}`}>
+            <Button size="sm">
+              <FiEye className="h-4 w-4" />
+              Preview
+            </Button>
+          </Link>
+        ) : ppt ? (
+          <Button size="sm" onClick={openInNewTab} loading={busy}>
+            <FiExternalLink className="h-4 w-4" />
+            Open
+          </Button>
+        ) : null}
+
+        <Button size="sm" variant="secondary" onClick={openInNewTab} loading={busy}>
+          <FiDownload className="h-4 w-4" />
+          Download
+        </Button>
+
+        <div className="ml-auto flex items-center gap-1">
           <Link
             to={`/lessons/${lesson.id}/edit`}
             aria-label="Edit lesson"
@@ -66,6 +98,8 @@ export function LessonCard({
           </button>
         </div>
       </div>
+
+      <p className="mt-3 truncate text-xs text-slate-400">Updated {formatDate(lesson.updatedAt)}</p>
     </Card>
   );
 }

@@ -1,4 +1,4 @@
-import { forwardRef, useId, type MouseEvent } from "react";
+import { forwardRef, useId } from "react";
 import type {
   ButtonHTMLAttributes,
   HTMLAttributes,
@@ -7,7 +7,6 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 import { cn } from "../lib/cn";
-import { prefersReducedMotion } from "../lib/useGsap";
 
 /* --------------------------------- Button --------------------------------- */
 
@@ -38,33 +37,6 @@ const buttonSizes: Record<ButtonSize, string> = {
   lg: "h-12 px-6 text-base",
 };
 
-function createRipple(event: MouseEvent<HTMLButtonElement>): void {
-  const button = event.currentTarget;
-  const rect = button.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height);
-  const ripple = document.createElement("span");
-  ripple.style.cssText = [
-    "position:absolute",
-    "border-radius:9999px",
-    "pointer-events:none",
-    "background:currentColor",
-    "opacity:0.28",
-    `width:${size}px`,
-    `height:${size}px`,
-    `left:${event.clientX - rect.left - size / 2}px`,
-    `top:${event.clientY - rect.top - size / 2}px`,
-  ].join(";");
-  button.appendChild(ripple);
-  const animation = ripple.animate(
-    [
-      { transform: "scale(0)", opacity: 0.28 },
-      { transform: "scale(2.4)", opacity: 0 },
-    ],
-    { duration: 600, easing: "ease-out" },
-  );
-  animation.onfinish = () => ripple.remove();
-}
-
 export function Button({
   className,
   variant = "primary",
@@ -73,27 +45,18 @@ export function Button({
   fullWidth = false,
   disabled,
   children,
-  onClick,
   ...props
 }: ButtonProps) {
-  function handleClick(event: MouseEvent<HTMLButtonElement>) {
-    if (!prefersReducedMotion()) {
-      createRipple(event);
-    }
-    onClick?.(event);
-  }
-
   return (
     <button
       className={cn(
-        "relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-2xl font-semibold transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex items-center justify-center gap-2 rounded-2xl font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
         buttonVariants[variant],
         buttonSizes[size],
         fullWidth && "w-full",
         className,
       )}
       disabled={disabled || loading}
-      onClick={handleClick}
       {...props}
     >
       {loading ? (
@@ -270,8 +233,7 @@ export function Card({
     <div
       className={cn(
         "glass rounded-2xl",
-        hover &&
-          "group transition-all duration-300 hover:-translate-y-1 hover:border-indigo-400/40 hover:shadow-soft-lg",
+        hover && "transition-colors hover:border-slate-300 dark:hover:border-white/20",
         className,
       )}
       {...props}
@@ -354,14 +316,5 @@ export function Spinner({ label = "Loading..." }: { label?: string }) {
 /* -------------------------------- Skeleton -------------------------------- */
 
 export function Skeleton({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-xl bg-slate-200/70 dark:bg-white/5",
-        className,
-      )}
-    >
-      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/50 to-transparent dark:via-white/10" />
-    </div>
-  );
+  return <div className={cn("rounded-xl bg-slate-200/70 dark:bg-white/5", className)} />;
 }

@@ -26,12 +26,6 @@ export function Layout() {
 
   return (
     <div className="min-h-screen">
-      {/* Ambient background wash */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/10" />
-        <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-500/10" />
-      </div>
-
       <Sidebar
         collapsed={collapsed}
         mobileOpen={mobileOpen}

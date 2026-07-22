@@ -1,5 +1,7 @@
-import { useLayoutEffect, useRef, type DependencyList } from "react";
-import gsap from "gsap";
+import { useRef, type DependencyList } from "react";
+
+// Animations were intentionally removed for a clean, static UI.
+// These hooks are kept as no-ops so existing callers keep working.
 
 export const EASE = "power2.out";
 
@@ -10,46 +12,15 @@ export function prefersReducedMotion(): boolean {
   );
 }
 
-/**
- * Scopes a GSAP setup function to a container element and automatically
- * reverts (cleans up) every tween/timeline on unmount or dependency change.
- * Skips all animation when the user prefers reduced motion.
- */
 export function useGsap<T extends HTMLElement = HTMLDivElement>(
-  setup: (self: T) => void,
-  deps: DependencyList = [],
+  _setup?: (self: T) => void,
+  _deps: DependencyList = [],
 ) {
-  const scope = useRef<T>(null);
-
-  useLayoutEffect(() => {
-    const el = scope.current;
-    if (!el || prefersReducedMotion()) {
-      return;
-    }
-
-    const ctx = gsap.context(() => setup(el), el);
-    return () => ctx.revert();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-
-  return scope;
+  return useRef<T>(null);
 }
 
-/**
- * Staggered entrance for any descendant marked with `data-reveal`.
- * Runs once per mount. Used for cards, lists and dashboards.
- */
 export function useStaggerReveal<T extends HTMLElement = HTMLDivElement>(
-  deps: DependencyList = [],
+  _deps: DependencyList = [],
 ) {
-  return useGsap<T>(() => {
-    gsap.from("[data-reveal]", {
-      y: 18,
-      opacity: 0,
-      duration: 0.55,
-      ease: EASE,
-      stagger: 0.06,
-      clearProps: "transform,opacity",
-    });
-  }, deps);
+  return useRef<T>(null);
 }

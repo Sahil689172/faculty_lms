@@ -53,7 +53,7 @@ export function ProfileMenu() {
         aria-expanded={open}
         className="flex items-center gap-2 rounded-xl p-1 pr-2 transition-colors hover:bg-slate-500/10 dark:hover:bg-white/10"
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-sm font-bold text-white shadow-soft">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white">
           {initialsOf(name) || "F"}
         </span>
         <span className="hidden text-left sm:block">
@@ -69,33 +69,30 @@ export function ProfileMenu() {
         />
       </button>
 
-      <div
-        role="menu"
-        className={cn(
-          "glass absolute right-0 mt-2 w-60 origin-top-right rounded-2xl p-2 transition-all duration-200",
-          open
-            ? "pointer-events-auto scale-100 opacity-100"
-            : "pointer-events-none scale-95 opacity-0",
-        )}
-      >
-        <div className="border-b border-slate-200/70 px-3 py-2.5 dark:border-white/10">
-          <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
-            {name}
-          </p>
-          {faculty?.email ? (
-            <p className="truncate text-xs text-slate-500 dark:text-slate-400">{faculty.email}</p>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          role="menuitem"
-          onClick={handleLogout}
-          className="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400"
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 z-50 mt-2 w-60 origin-top-right rounded-2xl border border-slate-200 bg-white p-2 shadow-soft-lg dark:border-white/10 dark:bg-slate-900"
         >
-          <FiLogOut className="h-4 w-4" />
-          Log out
-        </button>
-      </div>
+          <div className="border-b border-slate-200 px-3 py-2.5 dark:border-white/10">
+            <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+              {name}
+            </p>
+            {faculty?.email ? (
+              <p className="truncate text-xs text-slate-500 dark:text-slate-400">{faculty.email}</p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleLogout}
+            className="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400"
+          >
+            <FiLogOut className="h-4 w-4" />
+            Log out
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

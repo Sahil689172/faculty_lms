@@ -1,11 +1,6 @@
 import { NavLink } from "react-router-dom";
 import type { IconType } from "react-icons";
-import {
-  FiChevronLeft,
-  FiGrid,
-  FiLayers,
-  FiUploadCloud,
-} from "react-icons/fi";
+import { FiChevronLeft, FiGrid, FiUploadCloud } from "react-icons/fi";
 import { cn } from "../lib/cn";
 
 interface NavItem {
@@ -55,20 +50,13 @@ export function Sidebar({
       >
         <div
           className={cn(
-            "flex h-16 items-center gap-2.5 px-5",
+            "flex h-16 items-center px-5",
             collapsed && "lg:justify-center lg:px-0",
           )}
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-soft">
-            <FiLayers className="h-5 w-5" />
-          </span>
-          <span
-            className={cn(
-              "font-display text-lg font-bold tracking-tight text-slate-800 transition-all duration-200 dark:text-white",
-              collapsed && "lg:hidden",
-            )}
-          >
-            Faculty LMS
+          <span className="font-display text-lg font-bold tracking-tight text-slate-800 dark:text-white">
+            {collapsed ? <span className="hidden lg:inline">FL</span> : null}
+            <span className={cn(collapsed && "lg:hidden")}>Faculty LMS</span>
           </span>
         </div>
 

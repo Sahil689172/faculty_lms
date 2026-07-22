@@ -85,3 +85,7 @@ export function getFileMeta(mimeType: string | undefined, fileName = ""): FileMe
 export function isPdf(mimeType: string | undefined, fileName = ""): boolean {
   return getFileMeta(mimeType, fileName) === PDF;
 }
+
+export function isPowerpoint(mimeType: string | undefined, fileName = ""): boolean {
+  return getFileMeta(mimeType, fileName) === PPT;
+}
