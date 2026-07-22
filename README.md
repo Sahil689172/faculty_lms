@@ -4,12 +4,84 @@ Faculty-only LMS: upload, preview, edit, and delete lesson files.
 
 | Layer | Stack | Deploy |
 |-------|--------|--------|
-| Frontend | React + TypeScript + Vite + Tailwind | **Vercel** |
+| Frontend | React + TypeScript + Vite + Tailwind | **Netlify** |
 | Backend | Express + TypeScript + Prisma + JWT | **Render** |
 | Database | PostgreSQL | **Supabase** |
 | Storage | Object storage | **Supabase Storage** |
 
 > Deployment uses **native platform builds** (no Docker required).
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TB
+  subgraph Client["Client"]
+    Browser["Faculty browser"]
+  end
+
+  subgraph Netlify["Netlify"]
+    SPA["React SPA<br/>Vite + Tailwind<br/>JWT in localStorage"]
+  end
+
+  subgraph Render["Render"]
+    API["Express API<br/>TypeScript + JWT + bcrypt<br/>Helmet · CORS · Rate limit"]
+    subgraph Layers["Clean architecture"]
+      Routes["Routes"] --> Controllers["Controllers"]
+      Controllers --> Services["Services"]
+      Services --> Repositories["Repositories"]
+    end
+    API --- Layers
+  end
+
+  subgraph Supabase["Supabase"]
+    DB[("PostgreSQL<br/>Prisma ORM")]
+    Storage["Storage<br/>lesson-files bucket<br/>Signed URLs"]
+  end
+
+  Browser --> SPA
+  SPA -->|"HTTPS REST /api/*<br/>Bearer JWT"| API
+  Repositories --> DB
+  Services --> Storage
+```
+
+**Request flow (lessons)**
+
+```mermaid
+sequenceDiagram
+  participant U as Faculty (browser)
+  participant F as Frontend (Netlify)
+  participant B as Backend (Render)
+  participant P as Postgres (Supabase)
+  participant S as Storage (Supabase)
+
+  U->>F: Login / Register
+  F->>B: POST /api/auth/login
+  B->>P: Verify faculty + password hash
+  B-->>F: accessToken + public faculty
+  F->>F: Store JWT, open dashboard
+
+  U->>F: Upload lesson (multipart)
+  F->>B: POST /api/lessons + file
+  B->>S: Upload object
+  B->>P: Insert lesson metadata
+  B-->>F: Lesson response
+
+  U->>F: Preview / Download
+  F->>B: GET /api/lessons/:id/download
+  B->>S: Create signed URL
+  B-->>F: Temporary URL
+  F-->>U: Open / embed preview
+```
+
+| Path | Responsibility |
+|------|----------------|
+| `frontend/` | SPA: auth UI, dashboard, upload, PDF preview |
+| `backend/src/modules/*` | Auth, lessons, storage (routes → controllers → services → repositories) |
+| `backend/prisma/` | Schema + migrations |
+| Supabase Postgres | Faculty + lesson metadata |
+| Supabase Storage | Lesson files (private bucket + signed URLs) |
 
 ---
 
@@ -84,7 +156,7 @@ cd frontend && npm run build && npm run preview
 | `JWT_SECRET` | yes | `openssl rand -hex 32` (≥ 32 chars) |
 | `JWT_EXPIRES_IN` | no | Default `8h` |
 | `BCRYPT_SALT_ROUNDS` | no | Default `12` |
-| `CORS_ORIGIN` | yes | Your Vercel URL(s), comma-separated, **no trailing slash** |
+| `CORS_ORIGIN` | yes | Your Netlify URL(s), comma-separated, **no trailing slash** |
 | `SUPABASE_URL` | yes* | Project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes* | Service role (server only) |
 | `SUPABASE_BUCKET` | no | Default `lesson-files` |
@@ -97,32 +169,31 @@ Full template: `backend/.env.example`.
 
 ---
 
-## Deploy frontend → Vercel
+## Deploy frontend → Netlify
 
 ### Build settings
 
 | Setting | Value |
 |---------|--------|
-| Root Directory | `frontend` |
-| Framework Preset | Vite |
-| Build Command | `npm run build` |
-| Output Directory | `dist` |
-| Install Command | `npm ci` (or default `npm install`) |
+| Base directory | `frontend` |
+| Build command | `npm run build` |
+| Publish directory | `frontend/dist` |
+| Node version | `20` (or set in Netlify UI / `.nvmrc`) |
 
-SPA routing is handled by `frontend/vercel.json` (rewrites + security/cache headers).
+SPA routing is handled by `frontend/netlify.toml` (redirects all routes to `index.html`).
 
 ### Steps
 
-1. [Vercel](https://vercel.com) → **Add New → Project** → import the repo.
-2. Set **Root Directory** to `frontend`.
+1. [Netlify](https://app.netlify.com) → **Add new site** → import the GitHub repo.
+2. Set **Base directory** to `frontend` (or configure via `frontend/netlify.toml`).
 3. Add environment variable:
    - `VITE_API_BASE_URL` = `https://<your-render-service>.onrender.com/api`  
    (must include `/api`; baked in at **build** time).
 4. Deploy.
-5. Copy the Vercel URL (e.g. `https://faculty-lms.vercel.app`).
+5. Copy the Netlify URL (e.g. `https://your-site.netlify.app`).
 6. Update Render `CORS_ORIGIN` to that exact origin and **redeploy the backend**.
 
-### Frontend environment variables (Vercel)
+### Frontend environment variables (Netlify)
 
 | Variable | Required | Notes |
 |----------|----------|-------|
@@ -154,7 +225,7 @@ Use `DIRECT_URL` for migrate; `DATABASE_URL` (pooler) for the running app.
 ## Post-deploy checklist
 
 1. `GET https://<render>/api/health` → `status: "ok"`, `database: "connected"`.
-2. Backend `CORS_ORIGIN` matches the Vercel origin exactly.
+2. Backend `CORS_ORIGIN` matches the Netlify origin exactly.
 3. Frontend was built with the correct `VITE_API_BASE_URL`.
 4. Login / register / upload PDF / preview / download / edit / delete.
 5. Supabase bucket `lesson-files` exists and is private; service role key is set on Render only.
@@ -198,4 +269,4 @@ Use `DIRECT_URL` for migrate; `DATABASE_URL` (pooler) for the running app.
 - `tointegrate.md` — integration runbook  
 - `backend/.env.example` / `frontend/.env.example` — all variables  
 - `render.yaml` — Render native Node blueprint  
-- `frontend/vercel.json` — SPA rewrites + headers  
+- `frontend/netlify.toml` — SPA redirects for Netlify  

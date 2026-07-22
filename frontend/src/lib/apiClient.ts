@@ -3,7 +3,7 @@ import axios from "axios";
 /**
  * Vite inlines VITE_* at build time.
  * - Development: falls back to local API if unset.
- * - Production builds: VITE_API_BASE_URL is required (set it on Vercel).
+ * - Production builds: VITE_API_BASE_URL is required (set it on Netlify).
  */
 function resolveApiBaseUrl(): string {
   const fromEnv = import.meta.env.VITE_API_BASE_URL?.trim();
@@ -17,7 +17,7 @@ function resolveApiBaseUrl(): string {
   }
 
   throw new Error(
-    "VITE_API_BASE_URL is missing. Set it in the Vercel project env (e.g. https://your-api.onrender.com/api) and rebuild.",
+    "VITE_API_BASE_URL is missing. Set it in the Netlify site env (e.g. https://your-api.onrender.com/api) and rebuild.",
   );
 }
 

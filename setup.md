@@ -147,16 +147,16 @@ npm run preview
 
 ---
 
-## Deployment (Vercel + Render)
+## Deployment (Netlify + Render)
 
 Docker is **not** required. See `README.md` for full production steps.
 
 | App | Platform | Root | Build | Start / Output |
 |-----|----------|------|-------|----------------|
 | Backend | Render (Node) | `backend` | `npm ci && npx prisma generate && npm run build` | `npx prisma migrate deploy && npm start` |
-| Frontend | Vercel | `frontend` | `npm run build` | Output `dist` |
+| Frontend | Netlify | `frontend` | `npm run build` | Publish `dist` |
 
-Set `CORS_ORIGIN` on Render to your Vercel URL, and `VITE_API_BASE_URL` on Vercel to `https://<render>/api`.
+Set `CORS_ORIGIN` on Render to your Netlify URL, and `VITE_API_BASE_URL` on Netlify to `https://<render>/api`.
 
 ---
 

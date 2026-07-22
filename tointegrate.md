@@ -11,7 +11,7 @@ external services and deploy. Nothing here required code changes — only config
 - npm
 - A Supabase account
 - (Optional) Docker Desktop
-- Accounts on Render (backend) and Vercel (frontend)
+- Accounts on Render (backend) and Netlify (frontend)
 
 > If the local shell was broken during development, open a fresh terminal first and
 > confirm `node -v` and `npm -v` work.
@@ -94,7 +94,7 @@ End-to-end check: log in → upload a PDF/PPT/video → view/download → edit �
 1. Push the repo to GitHub.
 2. Render → **New → Blueprint** → select the repo.
 3. Fill `sync: false` env vars: `DATABASE_URL`, `DIRECT_URL`, `CORS_ORIGIN`
-   (your Vercel URL), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+   (your Netlify URL), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 4. Deploy. Start command applies migrations. Health check: `/api/health`.
 5. Optional seed (Render Shell): `npm run prisma:seed`.
 
@@ -105,16 +105,16 @@ End-to-end check: log in → upload a PDF/PPT/video → view/download → edit �
 3. Add the same env vars. Do **not** set `PORT` manually.
 4. Deploy.
 
-## 7. Deploy — Frontend on Vercel
+## 7. Deploy — Frontend on Netlify
 
-1. Vercel → **New Project** → import the repo, **Root Directory** = `frontend`.
-2. Framework: **Vite**. Build: `npm run build`. Output: `dist`.
+1. Netlify → **Add new site** → import the repo, **Base directory** = `frontend`.
+2. Build: `npm run build`. Publish: `dist`.
 3. Env: `VITE_API_BASE_URL=https://<your-render-api>.onrender.com/api`.
-4. Deploy. `vercel.json` handles SPA rewrites + security headers.
+4. Deploy. `frontend/netlify.toml` handles SPA redirects + headers.
 
 ## 8. Post-deploy wiring
 
-- Set backend `CORS_ORIGIN` to the exact Vercel origin (no trailing slash) and redeploy.
+- Set backend `CORS_ORIGIN` to the exact Netlify origin (no trailing slash) and redeploy.
 - Confirm login, upload, download, edit, delete on production URLs.
 - Rotate secrets if they were ever committed or shared.
 
@@ -132,5 +132,5 @@ End-to-end check: log in → upload a PDF/PPT/video → view/download → edit �
 - [ ] End-to-end lesson upload/download works
 - [ ] `npm test` passes
 - [ ] Backend deployed to Render (env vars + seed)
-- [ ] Frontend deployed to Vercel (`VITE_API_BASE_URL`)
+- [ ] Frontend deployed to Netlify (`VITE_API_BASE_URL`)
 - [ ] `CORS_ORIGIN` updated to the production frontend URL
