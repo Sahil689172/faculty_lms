@@ -23,9 +23,10 @@ external services and deploy. Nothing here required code changes — only config
 1. Create a new Supabase project; note the database password.
 2. In **Project Settings → Database → Connection string**, copy:
    - **Pooler / Transaction** connection (port `6543`) → `DATABASE_URL`
-     (append `?pgbouncer=true`).
-   - **Direct** connection (port `5432`) → `DIRECT_URL`.
+     (append `?pgbouncer=true&connection_limit=1`).
+   - **Direct** connection (port `5432`, host `db.<project-ref>.supabase.co`) → `DIRECT_URL`.
 3. Put both into `backend/.env`.
+4. Generate a strong `JWT_SECRET` (`openssl rand -hex 32`) — production rejects secrets shorter than 32 characters and known placeholders.
 
 ## 2. Supabase — Storage
 

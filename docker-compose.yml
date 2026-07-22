@@ -1,24 +1,67 @@
+# Production stack for Faculty LMS
+# Usage (from repo root):
+#   1. Fill backend/.env (DATABASE_URL, JWT_SECRET, CORS_ORIGIN, Supabase, …)
+#      CORS_ORIGIN must include the browser origin, e.g. http://localhost:8080
+#   2. docker compose up --build
+#
+# Frontend build arg VITE_API_BASE_URL must be the URL the *browser* uses to
+# reach the API (not the Docker service hostname).
+
+name: faculty-lms
+
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: faculty-lms-backend
     ports:
-      - "4000:4000"
+      - "${BACKEND_PORT:-4000}:4000"
     env_file:
       - ./backend/.env
     environment:
       NODE_ENV: production
+      PORT: 4000
+      # Wait / migrate controls (entrypoint)
+      DB_WAIT_ATTEMPTS: ${DB_WAIT_ATTEMPTS:-30}
+      DB_WAIT_INTERVAL: ${DB_WAIT_INTERVAL:-2}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+    networks:
+      - faculty-lms-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 50s
+    # No app source volume in production — image is the source of truth.
+    # Optional: persist nothing critical; DB + Storage live on Supabase.
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
+        # Browser-reachable API URL (baked into the SPA at build time)
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000/api}
+    container_name: faculty-lms-frontend
     ports:
-      - "8080:80"
+      - "${FRONTEND_PORT:-8080}:80"
+    networks:
+      - faculty-lms-net
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  faculty-lms-net:
+    driver: bridge
+    name: faculty-lms-net

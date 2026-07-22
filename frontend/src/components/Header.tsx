@@ -20,6 +20,7 @@ export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
           <input
             type="search"
             placeholder="Search lessons..."
+            aria-label="Search lessons"
             className="h-10 w-full rounded-xl border border-slate-200 bg-white/60 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
           />
         </div>

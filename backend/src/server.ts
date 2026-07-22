@@ -1,13 +1,15 @@
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { prisma } from "./lib/prisma.js";
+import { logger } from "./lib/logger.js";
 
 const app = createApp();
 
 const server = app.listen(env.port, () => {
-  console.log(
-    `Faculty LMS API listening on port ${env.port} (${env.nodeEnv})`,
-  );
+  logger.info(`Faculty LMS API listening on port ${env.port}`, {
+    environment: env.nodeEnv,
+    storageConfigured: env.isStorageConfigured,
+  });
 });
 
 let shuttingDown = false;
@@ -17,10 +19,10 @@ async function shutdown(signal: string) {
     return;
   }
   shuttingDown = true;
-  console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+  logger.info(`Received ${signal}. Shutting down gracefully...`);
 
   const forceExit = setTimeout(() => {
-    console.error("Forced shutdown after timeout");
+    logger.error("Forced shutdown after timeout");
     process.exit(1);
   }, 5_000);
   forceExit.unref();
@@ -36,9 +38,9 @@ async function shutdown(signal: string) {
   const failed = results.find((result) => result.status === "rejected");
 
   if (failed) {
-    console.error("Error during shutdown:", (failed as PromiseRejectedResult).reason);
+    logger.error("Error during shutdown", (failed as PromiseRejectedResult).reason);
   } else {
-    console.log("HTTP server closed and Prisma disconnected");
+    logger.info("HTTP server closed and Prisma disconnected");
   }
 
   clearTimeout(forceExit);
@@ -54,10 +56,13 @@ process.on("SIGINT", () => {
 });
 
 process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled promise rejection:", reason);
+  logger.error("Unhandled promise rejection", reason);
+  if (env.isProduction) {
+    void shutdown("unhandledRejection");
+  }
 });
 
 process.on("uncaughtException", (error) => {
-  console.error("Uncaught exception:", error);
+  logger.error("Uncaught exception", error);
   void shutdown("uncaughtException");
 });

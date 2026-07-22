@@ -1,5 +1,6 @@
 import type { Lesson } from "@prisma/client";
 import { AppError } from "../../lib/AppError.js";
+import { logger } from "../../lib/logger.js";
 import { storageService } from "../storage/storage.service.js";
 import { lessonRepository } from "./lesson.repository.js";
 import type {
@@ -40,7 +41,7 @@ async function safeRemove(storagePath: string): Promise<void> {
   try {
     await storageService.remove(storagePath);
   } catch (error) {
-    console.error(`Failed to remove storage object "${storagePath}":`, error);
+    logger.error(`Failed to remove storage object "${storagePath}"`, error);
   }
 }
 

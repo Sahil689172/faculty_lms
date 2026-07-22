@@ -127,7 +127,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           className={cn(
             inputBase,
             hasLabel ? "pb-2 pt-6" : "py-3",
-            rightSlot && "pr-11",
+            rightSlot != null ? "pr-11" : undefined,
             error && "border-red-400 focus:border-red-500 focus:ring-red-500/10 dark:border-red-400/60",
             className,
           )}

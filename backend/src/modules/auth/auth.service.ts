@@ -25,27 +25,24 @@ function buildAuthResult(faculty: Faculty): { accessToken: string; faculty: Publ
   return { accessToken, faculty: toPublicFaculty(faculty) };
 }
 
+/** Dummy bcrypt hash so missing-user logins still pay the bcrypt cost (timing safety). */
+const DUMMY_PASSWORD_HASH =
+  "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
 export const authService = {
   async login(input: LoginInput): Promise<{ accessToken: string; faculty: PublicFaculty }> {
     const faculty = await facultyRepository.findByEmail(input.email);
 
-    if (!faculty) {
+    const passwordMatches = await verifyPassword(
+      input.password,
+      faculty?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
+
+    if (!faculty || !passwordMatches) {
       throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password");
     }
 
-    const passwordMatches = await verifyPassword(input.password, faculty.passwordHash);
-
-    if (!passwordMatches) {
-      throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password");
-    }
-
-    const accessToken = signAccessToken({
-      sub: faculty.id,
-      email: faculty.email,
-      role: Roles.FACULTY,
-    });
-
-    return { accessToken, faculty: toPublicFaculty(faculty) };
+    return buildAuthResult(faculty);
   },
 
   async register(input: RegisterInput): Promise<{ accessToken: string; faculty: PublicFaculty }> {

@@ -1,12 +1,32 @@
+# Backend-only compose (run from backend/)
+# Prefer the root docker-compose.yml for full stack.
+
 services:
   api:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: faculty-lms-api
     ports:
       - "${PORT:-4000}:4000"
     env_file:
       - .env
     environment:
       NODE_ENV: production
+      PORT: 4000
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      DB_WAIT_ATTEMPTS: ${DB_WAIT_ATTEMPTS:-30}
+      DB_WAIT_INTERVAL: ${DB_WAIT_INTERVAL:-2}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 50s
+    networks:
+      - faculty-lms-api-net
+
+networks:
+  faculty-lms-api-net:
+    driver: bridge

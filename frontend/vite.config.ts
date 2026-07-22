@@ -6,4 +6,17 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    target: "es2020",
+    sourcemap: false,
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          forms: ["react-hook-form", "@hookform/resolvers", "zod"],
+        },
+      },
+    },
+  },
 });
