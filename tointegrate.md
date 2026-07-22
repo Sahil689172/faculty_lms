@@ -77,44 +77,46 @@ npm run dev                # http://localhost:5173
 
 End-to-end check: log in → upload a PDF/PPT/video → view/download → edit → delete.
 
-## 6. Docker (optional local run)
+## 6. Deploy — Backend on Render (native Node, no Docker)
 
-```bash
-# from repo root (backend/.env must be filled)
-docker compose up --build
-# backend → :4000, frontend → :8080
-# for the frontend build to target a non-default API, set VITE_API_BASE_URL before building
-```
+### Build / start
 
----
+| Setting | Value |
+|---------|--------|
+| Runtime | Node |
+| Root Directory | `backend` |
+| Build Command | `npm ci && npx prisma generate && npm run build` |
+| Start Command | `npx prisma migrate deploy && npm start` |
+| Health Check Path | `/api/health` |
 
-## 7. Deploy — Backend on Render
-
-Option A — Blueprint (`render.yaml` at repo root):
+### Option A — Blueprint (`render.yaml`)
 
 1. Push the repo to GitHub.
-2. Render → **New → Blueprint** → select the repo. It reads `render.yaml`.
-3. Fill the `sync: false` env vars in the dashboard: `DATABASE_URL`, `DIRECT_URL`,
-   `CORS_ORIGIN` (your Vercel URL), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
-   `JWT_SECRET` is auto-generated; adjust others as needed.
-4. Deploy. `preDeployCommand` runs `prisma migrate deploy`. Health check: `/api/health`.
-5. After the first deploy, run the seed once (Render **Shell**): `npm run prisma:seed`.
+2. Render → **New → Blueprint** → select the repo.
+3. Fill `sync: false` env vars: `DATABASE_URL`, `DIRECT_URL`, `CORS_ORIGIN`
+   (your Vercel URL), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+4. Deploy. Start command applies migrations. Health check: `/api/health`.
+5. Optional seed (Render Shell): `npm run prisma:seed`.
 
-Option B — Manual: create a **Web Service**, root `backend/`, Docker runtime; add the
-same env vars; start command from the Dockerfile.
+### Option B — Manual Web Service
 
-## 8. Deploy — Frontend on Vercel
+1. **New → Web Service** → repo → Root Directory `backend`.
+2. Runtime **Node**; paste the build/start commands above.
+3. Add the same env vars. Do **not** set `PORT` manually.
+4. Deploy.
 
-1. Vercel → **New Project** → import the repo, set **Root Directory** to `frontend`.
-2. Framework preset: **Vite**. Build: `npm run build`, output: `dist`.
-3. Env var: `VITE_API_BASE_URL = https://<your-render-api>/api`.
-4. Deploy. `vercel.json` provides SPA rewrites.
+## 7. Deploy — Frontend on Vercel
 
-## 9. Post-deploy wiring
+1. Vercel → **New Project** → import the repo, **Root Directory** = `frontend`.
+2. Framework: **Vite**. Build: `npm run build`. Output: `dist`.
+3. Env: `VITE_API_BASE_URL=https://<your-render-api>.onrender.com/api`.
+4. Deploy. `vercel.json` handles SPA rewrites + security headers.
 
-- Set backend `CORS_ORIGIN` to the exact Vercel domain and redeploy.
-- Confirm login, upload, download, edit, delete against the production URLs.
-- Rotate `JWT_SECRET` / service-role key if they were ever committed or shared.
+## 8. Post-deploy wiring
+
+- Set backend `CORS_ORIGIN` to the exact Vercel origin (no trailing slash) and redeploy.
+- Confirm login, upload, download, edit, delete on production URLs.
+- Rotate secrets if they were ever committed or shared.
 
 ---
 

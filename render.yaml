@@ -1,20 +1,17 @@
-# Render deployment blueprint for the backend API.
-# Frontend is deployed separately on Vercel (see frontend/vercel.json).
+# Render blueprint — native Node (no Docker)
+# Dashboard: New → Blueprint → connect this repo, or create a Web Service manually.
 services:
   - type: web
     name: faculty-lms-api
-    runtime: docker
+    runtime: node
     rootDir: backend
-    dockerfilePath: ./Dockerfile
     plan: free
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
     healthCheckPath: /api/health
-    # Apply pending migrations before each release.
-    preDeployCommand: npx prisma migrate deploy
     envVars:
       - key: NODE_ENV
-        value: "production"
-      - key: PORT
-        value: "4000"
+        value: production
       - key: DATABASE_URL
         sync: false
       - key: DIRECT_URL
@@ -22,7 +19,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
-        value: "8h"
+        value: 8h
       - key: BCRYPT_SALT_ROUNDS
         value: "12"
       - key: CORS_ORIGIN
@@ -32,7 +29,7 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: SUPABASE_BUCKET
-        value: "lesson-files"
+        value: lesson-files
       - key: MAX_FILE_SIZE_BYTES
         value: "52428800"
       - key: SIGNED_URL_EXPIRES_SEC

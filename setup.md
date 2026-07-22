@@ -147,21 +147,16 @@ npm run preview
 
 ---
 
-## Docker
+## Deployment (Vercel + Render)
 
-```bash
-# from repo root, after backend/.env is filled in
-# CORS_ORIGIN must include http://localhost:8080 for the Docker SPA
-# VITE_API_BASE_URL is what the browser uses to call the API
-set VITE_API_BASE_URL=http://localhost:4000/api
-docker compose up --build
-# backend → http://localhost:4000, frontend → http://localhost:8080
-```
+Docker is **not** required. See `README.md` for full production steps.
 
-The backend container waits for the database, runs `prisma migrate deploy`, then starts
-the API. Frontend starts only after the backend health check passes.
+| App | Platform | Root | Build | Start / Output |
+|-----|----------|------|-------|----------------|
+| Backend | Render (Node) | `backend` | `npm ci && npx prisma generate && npm run build` | `npx prisma migrate deploy && npm start` |
+| Frontend | Vercel | `frontend` | `npm run build` | Output `dist` |
 
-Frontend Docker builds **require** `VITE_API_BASE_URL` as a build arg.
+Set `CORS_ORIGIN` on Render to your Vercel URL, and `VITE_API_BASE_URL` on Vercel to `https://<render>/api`.
 
 ---
 

@@ -1,94 +1,167 @@
 # Faculty Lesson Management System
 
-Faculty-only LMS for uploading, previewing, editing, and deleting lesson files.
+Faculty-only LMS: upload, preview, edit, and delete lesson files.
 
-- **Frontend:** React + TypeScript + Vite + Tailwind
-- **Backend:** Express + TypeScript + Prisma + PostgreSQL (Supabase) + JWT + Supabase Storage
+| Layer | Stack | Deploy |
+|-------|--------|--------|
+| Frontend | React + TypeScript + Vite + Tailwind | **Vercel** |
+| Backend | Express + TypeScript + Prisma + JWT | **Render** |
+| Database | PostgreSQL | **Supabase** |
+| Storage | Object storage | **Supabase Storage** |
+
+> Deployment uses **native platform builds** (no Docker required).
 
 ---
 
-## Quick start (local)
+## Local development
 
 ### Backend
 
 ```bash
 cd backend
-cp .env.example .env   # fill in DATABASE_URL, DIRECT_URL, JWT_SECRET, CORS_ORIGIN
+cp .env.example .env          # fill DATABASE_URL, DIRECT_URL, JWT_SECRET, CORS_ORIGIN, Supabase
 npm install
 npx prisma generate
 npm run prisma:migrate
 npm run prisma:seed
-npm run dev            # http://localhost:4000
+npm run dev                   # http://localhost:4000
 ```
 
 ### Frontend
 
 ```bash
 cd frontend
-cp .env.example .env   # set VITE_API_BASE_URL=http://localhost:4000/api
+cp .env.example .env          # VITE_API_BASE_URL=http://localhost:4000/api
 npm install
-npm run dev            # http://localhost:5173
+npm run dev                   # http://localhost:5173
+```
+
+### Production build (local verify)
+
+```bash
+# Backend
+cd backend && npm run build && npm start
+
+# Frontend (separate terminal)
+cd frontend && npm run build && npm run preview
 ```
 
 ---
 
-## Production build
+## Deploy backend → Render
 
-### Backend
+### Build / start commands
+
+| Setting | Value |
+|---------|--------|
+| Runtime | **Node** |
+| Root Directory | `backend` |
+| Build Command | `npm ci && npx prisma generate && npm run build` |
+| Start Command | `npx prisma migrate deploy && npm start` |
+| Health Check Path | `/api/health` |
+
+(`render.yaml` at the repo root uses these settings.)
+
+### Steps
+
+1. Push the repo to GitHub.
+2. [Render](https://dashboard.render.com) → **New → Web Service** → connect the repo  
+   **or** **New → Blueprint** and select this repo (`render.yaml`).
+3. Set **Root Directory** to `backend` (if creating manually).
+4. Add environment variables (see table below). Do **not** override `PORT` — Render injects it.
+5. Deploy. First start runs `prisma migrate deploy`.
+6. Optional one-time seed (Render Shell):  
+   `SEED_FACULTY_EMAIL=... SEED_FACULTY_PASSWORD=... npm run prisma:seed`
+7. Copy the public URL, e.g. `https://faculty-lms-api.onrender.com`.
+
+### Backend environment variables (Render)
+
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `NODE_ENV` | yes | `production` |
+| `DATABASE_URL` | yes | Supabase **pooler** URL + `?pgbouncer=true&connection_limit=1` |
+| `DIRECT_URL` | yes | Supabase **direct** URL (migrations) |
+| `JWT_SECRET` | yes | `openssl rand -hex 32` (≥ 32 chars) |
+| `JWT_EXPIRES_IN` | no | Default `8h` |
+| `BCRYPT_SALT_ROUNDS` | no | Default `12` |
+| `CORS_ORIGIN` | yes | Your Vercel URL(s), comma-separated, **no trailing slash** |
+| `SUPABASE_URL` | yes* | Project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | yes* | Service role (server only) |
+| `SUPABASE_BUCKET` | no | Default `lesson-files` |
+| `MAX_FILE_SIZE_BYTES` | no | Default `52428800` |
+| `SIGNED_URL_EXPIRES_SEC` | no | Default `3600` |
+
+\* Required for uploads/downloads. API boots without them but file routes return `503`.
+
+Full template: `backend/.env.example`.
+
+---
+
+## Deploy frontend → Vercel
+
+### Build settings
+
+| Setting | Value |
+|---------|--------|
+| Root Directory | `frontend` |
+| Framework Preset | Vite |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Install Command | `npm ci` (or default `npm install`) |
+
+SPA routing is handled by `frontend/vercel.json` (rewrites + security/cache headers).
+
+### Steps
+
+1. [Vercel](https://vercel.com) → **Add New → Project** → import the repo.
+2. Set **Root Directory** to `frontend`.
+3. Add environment variable:
+   - `VITE_API_BASE_URL` = `https://<your-render-service>.onrender.com/api`  
+   (must include `/api`; baked in at **build** time).
+4. Deploy.
+5. Copy the Vercel URL (e.g. `https://faculty-lms.vercel.app`).
+6. Update Render `CORS_ORIGIN` to that exact origin and **redeploy the backend**.
+
+### Frontend environment variables (Vercel)
+
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `VITE_API_BASE_URL` | yes | Public API base including `/api` |
+
+Template: `frontend/.env.example`.
+
+---
+
+## Prisma migrations (production)
+
+Migrations run automatically on Render via the start command:
+
+```bash
+npx prisma migrate deploy && npm start
+```
+
+To run manually (Render Shell or local against prod DB):
 
 ```bash
 cd backend
-npm ci
-npx prisma generate
-npm run build
-npm run prisma:deploy   # apply migrations against production DB
-NODE_ENV=production npm start
+npx prisma migrate deploy
 ```
 
-### Frontend
-
-```bash
-cd frontend
-npm ci
-VITE_API_BASE_URL=https://api.example.com/api npm run build
-npm run preview         # optional local preview of dist/
-```
-
-Deploy `frontend/dist` to Vercel/Nginx. Deploy `backend` to Render/Docker.
+Use `DIRECT_URL` for migrate; `DATABASE_URL` (pooler) for the running app.
 
 ---
 
-## Environment variables
+## Post-deploy checklist
 
-### Backend (`backend/.env` — see `backend/.env.example`)
-
-| Variable | Required | Notes |
-|----------|----------|-------|
-| `NODE_ENV` | yes | `development` / `production` |
-| `PORT` | yes | API port |
-| `CORS_ORIGIN` | yes | Comma-separated frontend origins |
-| `DATABASE_URL` | yes | Supabase pooler URL (`?pgbouncer=true&connection_limit=1`) |
-| `DIRECT_URL` | yes | Direct DB URL for migrations |
-| `JWT_SECRET` | yes | ≥ 32 chars; production rejects known placeholders |
-| `JWT_EXPIRES_IN` | no | Default `8h` |
-| `BCRYPT_SALT_ROUNDS` | no | 10–15, default `12` |
-| `SUPABASE_URL` | for uploads | Project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | for uploads | Server-only key |
-| `SUPABASE_BUCKET` | no | Default `lesson-files` |
-| `MAX_FILE_SIZE_BYTES` | no | Default 50 MB |
-| `SIGNED_URL_EXPIRES_SEC` | no | Default 3600 |
-
-The API boots without a physical `.env` file when variables are injected by the host (Docker/Render).
-
-### Frontend (`frontend/.env`)
-
-| Variable | Required | Notes |
-|----------|----------|-------|
-| `VITE_API_BASE_URL` | yes (prod) | Full API base including `/api` |
+1. `GET https://<render>/api/health` → `status: "ok"`, `database: "connected"`.
+2. Backend `CORS_ORIGIN` matches the Vercel origin exactly.
+3. Frontend was built with the correct `VITE_API_BASE_URL`.
+4. Login / register / upload PDF / preview / download / edit / delete.
+5. Supabase bucket `lesson-files` exists and is private; service role key is set on Render only.
 
 ---
 
-## Health check
+## Health response
 
 `GET /api/health`
 
@@ -100,41 +173,29 @@ The API boots without a physical `.env` file when variables are injected by the 
     "uptime": "12s",
     "environment": "production",
     "database": "connected",
-    "timestamp": "2026-07-22T00:00:00.000Z"
+    "timestamp": "..."
   }
 }
 ```
 
-Returns HTTP `503` when the database is unreachable.
-
 ---
 
-## Docker
+## Security (already wired on the API)
 
-```bash
-# from repo root — ensure backend/.env is filled
-export VITE_API_BASE_URL=http://localhost:4000/api
-docker compose up --build
-# API  → http://localhost:4000
-# SPA  → http://localhost:8080
-```
-
----
-
-## Production checklist
-
-1. Set a strong `JWT_SECRET` (`openssl rand -hex 32`).
-2. Set `CORS_ORIGIN` to your real frontend origin(s).
-3. Set `VITE_API_BASE_URL` to the public API URL **before** building the frontend.
-4. Run `npm run prisma:deploy` against production Postgres.
-5. Configure Supabase Storage (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, bucket policies).
-6. Confirm `GET /api/health` returns `status: ok`.
-7. Confirm login/register are rate-limited under abuse.
+- Helmet, compression, HPP, rate limiting (global + auth)
+- CORS allowlist, `x-powered-by` disabled, JSON body limit
+- JWT HS256 + payload validation; strong `JWT_SECRET` required in production
+- Timing-safe login; passwords never returned
+- Centralized errors; no stack traces in production responses
+- Graceful SIGTERM/SIGINT shutdown (Prisma disconnect)
+- Swagger UI disabled when `NODE_ENV=production`
 
 ---
 
 ## Docs
 
-- `setup.md` — detailed local setup
-- `tointegrate.md` — integration/deployment runbook
-- `instructions.md` — phase change log
+- `setup.md` — local setup detail  
+- `tointegrate.md` — integration runbook  
+- `backend/.env.example` / `frontend/.env.example` — all variables  
+- `render.yaml` — Render native Node blueprint  
+- `frontend/vercel.json` — SPA rewrites + headers  
