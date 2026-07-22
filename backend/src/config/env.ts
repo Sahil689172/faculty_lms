@@ -1,4 +1,36 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+function resolveEnvFilePath(): string {
+  const candidates = [
+    resolve(process.cwd(), ".env"),
+    resolve(process.cwd(), "backend/.env"),
+  ];
+
+  const uniqueCandidates = [...new Set(candidates.map((candidate) => resolve(candidate)))];
+
+  for (const candidate of uniqueCandidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `No .env file found. Tried:\n${uniqueCandidates.map((candidate) => `  - ${candidate}`).join("\n")}`,
+  );
+}
+
+const envFilePath = resolveEnvFilePath();
+const dotenvResult = dotenv.config({
+  path: envFilePath,
+  // Ensure values from backend/.env win over empty pre-set shell variables.
+  override: true,
+});
+
+if (dotenvResult.error) {
+  throw new Error(`Failed to load .env from ${envFilePath}: ${dotenvResult.error.message}`);
+}
 
 const required = [
   "NODE_ENV",
@@ -54,8 +86,6 @@ function loadEnv() {
     jwtSecret: process.env.JWT_SECRET as string,
     jwtExpiresIn: process.env.JWT_EXPIRES_IN?.trim() || "8h",
     bcryptSaltRounds,
-    // Storage config is intentionally optional so the API boots without Supabase
-    // credentials; the storage service fails clearly at call time if unset.
     supabaseUrl,
     supabaseServiceRoleKey,
     supabaseBucket: process.env.SUPABASE_BUCKET?.trim() || "lesson-files",

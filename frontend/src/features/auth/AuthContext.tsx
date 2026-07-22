@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { clearToken, getToken } from "../../lib/apiClient";
-import { fetchMe, loginRequest, type Faculty } from "./auth.api";
+import { fetchMe, loginRequest, registerRequest, type Faculty } from "./auth.api";
 import { AuthContext, type AuthStatus } from "./auth.context";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -31,6 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       login: async (email: string, password: string) => {
         const profile = await loginRequest(email, password);
+        setFaculty(profile);
+        setStatus("authenticated");
+      },
+      register: async (name: string, email: string, password: string) => {
+        const profile = await registerRequest(name, email, password);
         setFaculty(profile);
         setStatus("authenticated");
       },
