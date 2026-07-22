@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
+import { FiCheck } from "react-icons/fi";
 import { ThemeToggle } from "./ThemeToggle";
+
+const highlights = [
+  "Upload PDFs, slides, documents and videos",
+  "Preview lessons right inside the browser",
+  "Keep every course material in one place",
+];
 
 export function AuthShell({
   title,
@@ -13,46 +20,61 @@ export function AuthShell({
   footer?: ReactNode;
 }) {
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left — clean informational panel */}
-      <div className="relative hidden bg-slate-900 lg:block">
-        <div className="flex h-full flex-col justify-between p-12">
-          <span className="font-display text-xl font-bold text-white">Faculty LMS</span>
-
-          <div className="max-w-md space-y-5">
-            <h2 className="font-display text-4xl font-bold leading-tight text-white">
-              Manage your lessons with clarity.
-            </h2>
-            <p className="text-lg leading-relaxed text-slate-400">
-              Upload, organise and share course materials in one simple workspace built for faculty.
-            </p>
+    <div className="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
+      {/* Left — form */}
+      <div className="flex flex-col px-6 py-8 sm:px-10 lg:px-16">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-sm bg-indigo-600" />
+            <span className="font-display text-base font-bold tracking-tight text-slate-900 dark:text-white">
+              Faculty LMS
+            </span>
           </div>
-
-          <p className="text-sm text-slate-500">
-            © {new Date().getFullYear()} Faculty Lesson Management System
-          </p>
-        </div>
-      </div>
-
-      {/* Right — form card */}
-      <div className="relative flex items-center justify-center px-5 py-12 sm:px-8">
-        <div className="absolute right-4 top-4">
           <ThemeToggle />
-        </div>
+        </header>
 
-        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-soft dark:border-white/10 dark:bg-slate-900 sm:p-10">
-          <div className="mb-8 space-y-2 text-center">
-            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">
-              {title}
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
-          </div>
+        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">
+          <h1 className="font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {title}
+          </h1>
+          <p className="mt-2 text-[15px] text-slate-500 dark:text-slate-400">{subtitle}</p>
 
-          {children}
+          <div className="mt-8">{children}</div>
 
           {footer ? (
-            <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">{footer}</p>
+            <p className="mt-8 text-sm text-slate-500 dark:text-slate-400">{footer}</p>
           ) : null}
+        </div>
+
+        <footer className="text-xs text-slate-400">
+          © {new Date().getFullYear()} Faculty Lesson Management System
+        </footer>
+      </div>
+
+      {/* Right — brand / value panel */}
+      <div className="relative hidden bg-slate-900 lg:flex lg:flex-col lg:justify-center lg:px-16">
+        <div className="max-w-md">
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-400">
+            Faculty workspace
+          </p>
+          <h2 className="mt-5 font-display text-[2.6rem] font-bold leading-[1.1] text-white">
+            A calmer home for your teaching material.
+          </h2>
+          <p className="mt-5 text-lg leading-relaxed text-slate-400">
+            Manage your course lessons, share study material with students, and keep every class
+            resource in one organised place.
+          </p>
+
+          <ul className="mt-10 space-y-4">
+            {highlights.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-slate-200">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300">
+                  <FiCheck className="h-3 w-3" />
+                </span>
+                <span className="text-[15px] leading-relaxed">{item}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

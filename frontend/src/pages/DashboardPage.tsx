@@ -23,26 +23,22 @@ function StatCard({
   icon: Icon,
   label,
   value,
-  tint,
-  color,
 }: {
   icon: IconType;
   label: string;
   value: string;
-  tint: string;
-  color: string;
 }) {
   return (
-    <Card data-reveal className="flex items-center gap-4 p-5">
-      <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${tint}`}>
-        <Icon className={`h-6 w-6 ${color}`} />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-sm text-slate-500 dark:text-slate-400">{label}</p>
-        <p className="truncate font-display text-2xl font-bold text-slate-900 dark:text-white">
-          {value}
-        </p>
+    <Card className="p-5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          {label}
+        </span>
+        <Icon className="h-4 w-4 text-slate-400" />
       </div>
+      <p className="mt-3 truncate font-display text-3xl font-bold text-slate-900 dark:text-white">
+        {value}
+      </p>
     </Card>
   );
 }
@@ -140,34 +136,10 @@ export function DashboardPage() {
           ))
         ) : (
           <>
-            <StatCard
-              icon={FiBookOpen}
-              label="Total lessons"
-              value={String(stats.total)}
-              tint="bg-indigo-500/10"
-              color="text-indigo-500"
-            />
-            <StatCard
-              icon={FiHardDrive}
-              label="Storage used"
-              value={stats.totalSize}
-              tint="bg-emerald-500/10"
-              color="text-emerald-500"
-            />
-            <StatCard
-              icon={FiLayers}
-              label="File types"
-              value={String(stats.types)}
-              tint="bg-violet-500/10"
-              color="text-violet-500"
-            />
-            <StatCard
-              icon={FiClock}
-              label="Last updated"
-              value={stats.latest}
-              tint="bg-amber-500/10"
-              color="text-amber-500"
-            />
+            <StatCard icon={FiBookOpen} label="Total lessons" value={String(stats.total)} />
+            <StatCard icon={FiHardDrive} label="Storage used" value={stats.totalSize} />
+            <StatCard icon={FiLayers} label="File types" value={String(stats.types)} />
+            <StatCard icon={FiClock} label="Last updated" value={stats.latest} />
           </>
         )}
       </div>

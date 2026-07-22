@@ -59,7 +59,7 @@ export function LessonCard({
         {lesson.description || "No description provided."}
       </p>
 
-      <div className="mt-4 flex items-center gap-2 border-t border-slate-200/70 pt-4 dark:border-white/10">
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-200/70 pt-4 dark:border-white/10">
         {pdf ? (
           <Link to={`/lessons/${lesson.id}`}>
             <Button size="sm">
