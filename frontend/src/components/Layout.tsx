@@ -1,36 +1,60 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../features/auth/useAuth";
-import { Button } from "./ui";
+import { Suspense, useEffect, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import { Sidebar } from "./Sidebar";
+import { Header } from "./Header";
+import { PageTransition } from "./PageTransition";
+import { Spinner } from "./ui";
+import { cn } from "../lib/cn";
+
+const COLLAPSE_KEY = "faculty_lms_sidebar_collapsed";
 
 export function Layout() {
-  const { faculty, logout } = useAuth();
-  const navigate = useNavigate();
+  const location = useLocation();
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => window.localStorage.getItem(COLLAPSE_KEY) === "true",
+  );
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  function handleLogout() {
-    logout();
-    navigate("/login", { replace: true });
-  }
+  useEffect(() => {
+    window.localStorage.setItem(COLLAPSE_KEY, String(collapsed));
+  }, [collapsed]);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to="/" className="text-lg font-semibold text-indigo-700">
-            Faculty LMS
-          </Link>
-          <div className="flex items-center gap-4">
-            {faculty ? (
-              <span className="hidden text-sm text-slate-600 sm:inline">{faculty.name}</span>
-            ) : null}
-            <Button variant="secondary" onClick={handleLogout}>
-              Log out
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">
-        <Outlet />
-      </main>
+      {/* Ambient background wash */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/10" />
+        <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-500/10" />
+      </div>
+
+      <Sidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        onToggleCollapse={() => setCollapsed((prev) => !prev)}
+        onCloseMobile={() => setMobileOpen(false)}
+      />
+
+      <div className={cn("transition-all duration-300", collapsed ? "lg:pl-20" : "lg:pl-64")}>
+        <Header onOpenMobile={() => setMobileOpen(true)} />
+        <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <Suspense
+            fallback={
+              <div className="flex h-64 items-center justify-center">
+                <Spinner label="Loading..." />
+              </div>
+            }
+          >
+            <PageTransition>
+              <Outlet />
+            </PageTransition>
+          </Suspense>
+        </main>
+      </div>
     </div>
   );
 }

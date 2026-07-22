@@ -5,7 +5,9 @@ import { useState } from "react";
 import { useAuth } from "../features/auth/useAuth";
 import { getApiErrorMessage } from "../lib/apiError";
 import { loginSchema, type LoginFormValues } from "../validation/schemas";
-import { Alert, Button, Field, Input } from "../components/ui";
+import { Alert, Button, Input } from "../components/ui";
+import { AuthShell } from "../components/AuthShell";
+import { PasswordInput } from "../components/PasswordInput";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -30,36 +32,65 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-6 rounded-xl bg-white p-8 shadow-sm">
-        <div className="space-y-1 text-center">
-          <h1 className="text-xl font-semibold text-slate-900">Faculty LMS</h1>
-          <p className="text-sm text-slate-500">Sign in to manage your lessons</p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-          {formError ? <Alert>{formError}</Alert> : null}
-
-          <Field label="Email" error={errors.email?.message}>
-            <Input type="email" autoComplete="email" {...register("email")} />
-          </Field>
-
-          <Field label="Password" error={errors.password?.message}>
-            <Input type="password" autoComplete="current-password" {...register("password")} />
-          </Field>
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
-
-        <p className="text-center text-sm text-slate-500">
-          Don't have an account?{" "}
-          <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-700">
+    <AuthShell
+      title="Welcome back"
+      subtitle="Sign in to manage your lessons"
+      footer={
+        <>
+          Don&apos;t have an account?{" "}
+          <Link
+            to="/register"
+            className="font-semibold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-400"
+          >
             Create Account
           </Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+        {formError ? <Alert>{formError}</Alert> : null}
+
+        <div data-auth-field>
+          <Input
+            label="Email address"
+            type="email"
+            autoComplete="email"
+            error={errors.email?.message}
+            {...register("email")}
+          />
+        </div>
+
+        <div data-auth-field>
+          <PasswordInput
+            label="Password"
+            autoComplete="current-password"
+            error={errors.password?.message}
+            {...register("password")}
+          />
+        </div>
+
+        <div data-auth-field className="flex items-center justify-between text-sm">
+          <label className="flex cursor-pointer items-center gap-2 text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-white/20 dark:bg-white/5"
+            />
+            Remember me
+          </label>
+          <button
+            type="button"
+            className="font-medium text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-400"
+          >
+            Forgot password?
+          </button>
+        </div>
+
+        <div data-auth-field>
+          <Button type="submit" fullWidth loading={isSubmitting}>
+            {isSubmitting ? "Signing in..." : "Sign in"}
+          </Button>
+        </div>
+      </form>
+    </AuthShell>
   );
 }

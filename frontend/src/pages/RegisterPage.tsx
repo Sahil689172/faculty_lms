@@ -5,7 +5,10 @@ import { useState } from "react";
 import { useAuth } from "../features/auth/useAuth";
 import { getApiErrorMessage } from "../lib/apiError";
 import { registerSchema, type RegisterFormValues } from "../validation/schemas";
-import { Alert, Button, Field, Input } from "../components/ui";
+import { Alert, Button, Input } from "../components/ui";
+import { AuthShell } from "../components/AuthShell";
+import { PasswordInput } from "../components/PasswordInput";
+import { PasswordStrength } from "../components/PasswordStrength";
 
 export function RegisterPage() {
   const { register: registerFaculty } = useAuth();
@@ -15,8 +18,11 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({ resolver: zodResolver(registerSchema) });
+
+  const passwordValue = watch("password") ?? "";
 
   async function onSubmit(values: RegisterFormValues) {
     setFormError(null);
@@ -30,48 +36,69 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-6 rounded-xl bg-white p-8 shadow-sm">
-        <div className="space-y-1 text-center">
-          <h1 className="text-xl font-semibold text-slate-900">Create your account</h1>
-          <p className="text-sm text-slate-500">Register to manage your lessons</p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-          {formError ? <Alert>{formError}</Alert> : null}
-
-          <Field label="Name" error={errors.name?.message}>
-            <Input type="text" autoComplete="name" {...register("name")} />
-          </Field>
-
-          <Field label="Email" error={errors.email?.message}>
-            <Input type="email" autoComplete="email" {...register("email")} />
-          </Field>
-
-          <Field label="Password" error={errors.password?.message}>
-            <Input type="password" autoComplete="new-password" {...register("password")} />
-          </Field>
-
-          <Field label="Confirm Password" error={errors.confirmPassword?.message}>
-            <Input
-              type="password"
-              autoComplete="new-password"
-              {...register("confirmPassword")}
-            />
-          </Field>
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating account..." : "Create account"}
-          </Button>
-        </form>
-
-        <p className="text-center text-sm text-slate-500">
+    <AuthShell
+      title="Create your account"
+      subtitle="Start managing your lessons in minutes"
+      footer={
+        <>
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-700">
+          <Link
+            to="/login"
+            className="font-semibold text-indigo-600 transition-colors hover:text-indigo-500 dark:text-indigo-400"
+          >
             Login
           </Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+        {formError ? <Alert>{formError}</Alert> : null}
+
+        <div data-auth-field>
+          <Input
+            label="Full name"
+            type="text"
+            autoComplete="name"
+            error={errors.name?.message}
+            {...register("name")}
+          />
+        </div>
+
+        <div data-auth-field>
+          <Input
+            label="Email address"
+            type="email"
+            autoComplete="email"
+            error={errors.email?.message}
+            {...register("email")}
+          />
+        </div>
+
+        <div data-auth-field className="space-y-2">
+          <PasswordInput
+            label="Password"
+            autoComplete="new-password"
+            error={errors.password?.message}
+            {...register("password")}
+          />
+          <PasswordStrength password={passwordValue} />
+        </div>
+
+        <div data-auth-field>
+          <PasswordInput
+            label="Confirm password"
+            autoComplete="new-password"
+            error={errors.confirmPassword?.message}
+            {...register("confirmPassword")}
+          />
+        </div>
+
+        <div data-auth-field>
+          <Button type="submit" fullWidth loading={isSubmitting}>
+            {isSubmitting ? "Creating account..." : "Create account"}
+          </Button>
+        </div>
+      </form>
+    </AuthShell>
   );
 }

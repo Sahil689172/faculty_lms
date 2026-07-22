@@ -16,7 +16,14 @@ export async function getLesson(id: string): Promise<Lesson> {
   return data.data;
 }
 
-export async function createLesson(payload: CreateLessonPayload): Promise<Lesson> {
+export interface UploadOptions {
+  onUploadProgress?: (percent: number) => void;
+}
+
+export async function createLesson(
+  payload: CreateLessonPayload,
+  options: UploadOptions = {},
+): Promise<Lesson> {
   const form = new FormData();
   form.append("title", payload.title);
 
@@ -26,7 +33,13 @@ export async function createLesson(payload: CreateLessonPayload): Promise<Lesson
 
   form.append("file", payload.file);
 
-  const { data } = await apiClient.post<{ data: Lesson }>("/lessons", form);
+  const { data } = await apiClient.post<{ data: Lesson }>("/lessons", form, {
+    onUploadProgress: (event) => {
+      if (options.onUploadProgress && event.total) {
+        options.onUploadProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    },
+  });
   return data.data;
 }
 

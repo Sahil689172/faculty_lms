@@ -1,17 +1,22 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
+import { FiArrowLeft } from "react-icons/fi";
 import { createLesson } from "../features/lessons/lessons.api";
 import { getApiErrorMessage } from "../lib/apiError";
 import { createLessonSchema, type CreateLessonFormValues } from "../validation/schemas";
-import { Alert, Button, Field, Input, TextArea } from "../components/ui";
+import { useStaggerReveal } from "../lib/useGsap";
+import { Alert, Button, Card, Input, TextArea } from "../components/ui";
+import { FileDropzone } from "../components/FileDropzone";
 
 export function UploadLessonPage() {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const scope = useStaggerReveal<HTMLDivElement>([]);
+  const [file, setFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
 
   const {
     register,
@@ -23,47 +28,84 @@ export function UploadLessonPage() {
     setFormError(null);
     setFileError(null);
 
-    const file = fileInputRef.current?.files?.[0];
-
     if (!file) {
       setFileError("A lesson file is required");
       return;
     }
 
     try {
-      await createLesson({ title: values.title, description: values.description, file });
+      setProgress(0);
+      await createLesson(
+        { title: values.title, description: values.description, file },
+        { onUploadProgress: setProgress },
+      );
       navigate("/", { replace: true });
     } catch (error) {
+      setProgress(null);
       setFormError(getApiErrorMessage(error, "Failed to upload lesson"));
     }
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
-      <Link to="/" className="text-sm font-medium text-indigo-600">
-        &larr; Back to lessons
+    <div ref={scope} className="mx-auto max-w-2xl space-y-6">
+      <Link
+        to="/"
+        data-reveal
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400"
+      >
+        <FiArrowLeft className="h-4 w-4" />
+        Back to lessons
       </Link>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">Upload a lesson</h1>
+      <div data-reveal>
+        <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-white">
+          Upload a lesson
+        </h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Add course material with a title, description and file.
+        </p>
+      </div>
 
-        <form className="mt-4 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <Card data-reveal className="p-6 sm:p-8">
+        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
           {formError ? <Alert>{formError}</Alert> : null}
 
-          <Field label="Title" error={errors.title?.message}>
-            <Input {...register("title")} />
-          </Field>
+          <Input label="Lesson title" error={errors.title?.message} {...register("title")} />
 
-          <Field label="Description" error={errors.description?.message}>
-            <TextArea rows={4} {...register("description")} />
-          </Field>
+          <TextArea
+            label="Description"
+            rows={4}
+            error={errors.description?.message}
+            {...register("description")}
+          />
 
-          <Field label="File (PDF, PPT, DOC, video, image)" error={fileError ?? undefined}>
-            <Input ref={fileInputRef} type="file" />
-          </Field>
+          <FileDropzone
+            file={file}
+            onFileSelect={(selected) => {
+              setFile(selected);
+              setFileError(null);
+            }}
+            error={fileError ?? undefined}
+            disabled={isSubmitting}
+          />
 
-          <div className="flex gap-2">
-            <Button type="submit" disabled={isSubmitting}>
+          {progress !== null ? (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+                <span>Uploading...</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-200"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex gap-3">
+            <Button type="submit" loading={isSubmitting}>
               {isSubmitting ? "Uploading..." : "Upload lesson"}
             </Button>
             <Link to="/">
@@ -73,7 +115,7 @@ export function UploadLessonPage() {
             </Link>
           </div>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }
