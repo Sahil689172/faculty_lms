@@ -16,7 +16,7 @@ export function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: env.corsOrigin,
+      origin: env.corsOrigins,
     }),
   );
   app.use(morgan(env.isProduction ? "combined" : "dev"));

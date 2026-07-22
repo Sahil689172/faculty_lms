@@ -77,12 +77,19 @@ function loadEnv() {
   const supabaseUrl = process.env.SUPABASE_URL?.trim() || "";
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "";
 
+  const corsOrigin = process.env.CORS_ORIGIN as string;
+  const corsOrigins = corsOrigin
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   return {
     nodeEnv: process.env.NODE_ENV as string,
     port,
     databaseUrl: process.env.DATABASE_URL as string,
     directUrl: process.env.DIRECT_URL as string,
-    corsOrigin: process.env.CORS_ORIGIN as string,
+    corsOrigin,
+    corsOrigins,
     jwtSecret: process.env.JWT_SECRET as string,
     jwtExpiresIn: process.env.JWT_EXPIRES_IN?.trim() || "8h",
     bcryptSaltRounds,
